@@ -1,4 +1,4 @@
-our $VERSION     = '0.01';
+our $VERSION     = '0.02';
 
 print "This document is the French translation from English of the module XML::Reader. In order to\n";
 print "get the Perl source code of the module, please see file XML/Reader.pm\n";
@@ -11,7 +11,7 @@ print "\n";
 
 =pod
 
-=head1 NOM
+=head1 NAME
 
 XML::Reader::French - Lire du XML avec des informations du chemin, conduit par un parseur d'extraction.
 
@@ -63,7 +63,7 @@ pas de chemin disponible.
 Par contre, avec XML::Reader, les les balises de dE<eacute>but, les balises de fin et le texte sont traduits en
 expressions similaires E<agrave> XPath. En consE<eacute>quence, il est inutile de compter des balises individuelles, on a
 un chemin et une valeur, et E<ccedil>a suffit. (par contre, au cas oE<ugrave> on veut opE<eacute>rer XML::Reader en fonctionnement
-compatible E<agrave> PYX, il y a toujours option {filter => 4}, comme dE<eacute>jE<agrave> mentionnE<eacute> ci-dessus).
+compatible E<agrave> PYX, il y a toujours l'option {filter => 4}, comme dE<eacute>jE<agrave> mentionnE<eacute> ci-dessus).
 
 Mais revenons-nous au fonctionnement normal de XML::Reader, voici un exemple XML dans la variable '$line1':
 
@@ -151,7 +151,7 @@ Voici un exemple pour crE<eacute>er un objet XML::Reader avec \*STDIN:
 
   my $rdr = XML::Reader->newhd(\*STDIN);
 
-On peut ajouter un ou plusieurs options dans une rE<eacute>fE<eacute>rence E<agrave> un hashage:
+On peut ajouter une ou plusieurs options dans une rE<eacute>fE<eacute>rence E<agrave> un hashage:
 
 =over
 
@@ -342,7 +342,7 @@ On dit que '/chemin1/chemin2/chemin3' (ou '/chemin4/chemin5/chemin6') sont "abso
 signifie que chaque chemin commence forcement par un caractE<egrave>re '/', et le mot "complE<egrave>t" signifie que
 la derniE<egrave>re partie 'chemin3' (ou 'chemin6') sera suivi implicitement par un caractE<egrave>re '/'.
 
-=head2 Un exemple avec option 'using'
+=head2 Un exemple avec l'option 'using'
 
 Le programme suivant prend un fichier XML et le parse avec XML::Reader, y compris l'option 'using' pour
 cibler des E<eacute>lE<eacute>ments spE<eacute>cifiques:
@@ -519,7 +519,7 @@ L'option {filter => } permet de sE<eacute>lectionner des diffE<eacute>rents mode
 
 =head2 Option {filter => 2}
 
-Avec option {filter => 2}, XML::Reader gE<eacute>nE<egrave>re une ligne pour chaque morceau de texte. Si la balise prE<eacute>cE<eacute>dente
+Avec l'option {filter => 2}, XML::Reader gE<eacute>nE<egrave>re une ligne pour chaque morceau de texte. Si la balise prE<eacute>cE<eacute>dente
 est une balise de dE<eacute>but, alors la mE<eacute>tode C<is_start> retourne 1. Si la balise suivante est une balise de fin,
 alors la mE<eacute>tode C<is_end> retourne 1. Si la balise prE<eacute>cE<eacute>dente est une balise de commentaire, alors la mE<eacute>thode
 C<is_comment> retourne 1. Si la balise prE<eacute>cE<eacute>dente est une balise de XML-declaration, alors la mE<eacute>thode C<is_decl>
@@ -866,6 +866,66 @@ et supprimer la deuxiE<egrave>me partie du texte 'end...' (ce que nous ne voulon
       }
   }
 
+=head1 FONCTIONS
+
+=head2 Fonction slurp_xml
+
+La fonction slurp_xml lit un fichier XML et aspire son contenu dans une rE<eacute>fE<eacute>rence E<agrave> une
+liste. Voici un exemple oE<ugrave> nous souhaitons aspirer le nom, la rue et la ville de tous les clients dans
+le chemin '/data/order/database/customer':
+
+  use XML::Reader qw(slurp_xml);
+
+  my $line2 = q{
+  <data>
+    <order>
+      <database>
+        <customer name="smith" id="652">
+          <street>high street</street>
+          <city>boston</city>
+        </customer>
+        <customer name="jones" id="184">
+          <street>maple street</street>
+          <city>new york</city>
+        </customer>
+        <customer name="stewart" id="520">
+          <street>ring road</street>
+          <city>dallas</city>
+        </customer>
+      </database>
+    </order>
+    <dummy value="ttt">test</dummy>
+    <supplier>hhh</supplier>
+    <supplier>iii</supplier>
+    <supplier>jjj</supplier>
+  </data>
+  };
+
+  my $aref = slurp_xml(\$line2, '/data/order/database/customer',
+    ['/@name', '/street', '/city']);
+
+  for (@$aref) {
+      printf "Name = %-7s Street = %-12s City = %s\n", $_->[0], $_->[1], $_->[2];
+  }
+
+Le premier paramE<egrave>tre de slurp_xml est ou le nom du fichier (ou une une rE<eacute>fE<eacute>rence E<agrave>
+un scalaire, ou une rE<eacute>fE<eacute>rence E<agrave> un fichier ouvert) du XML qu'on veut aspirer.
+Dans notre cas nous avons une une rE<eacute>fE<eacute>rence E<agrave> un scalaire \$line2. Le deuxiE<egrave>me
+paramE<egrave>tre est la racine de l'arbre qu'on veut aspirer (dans notre cas c'est '/data/order/database/customer').
+Finalement nous donnons une liste des E<eacute>lE<eacute>ments que nous souhaitons sE<eacute>lectionner, relative
+E<agrave> la racine. Dans notre cas c'est ['/@name', '/street', '/city'].
+
+Voici le rE<eacute>sultat:
+
+  Name = smith   Street = high street  City = boston
+  Name = jones   Street = maple street City = new york
+  Name = stewart Street = ring road    City = dallas
+
+Le fonctionnement de slurp_xml est similaire E<agrave> L<XML::Simple>, c'est E<agrave> dire il lit toutes les
+donnE<eacute>es dans un seul coup dans une structure en mE<eacute>moire. En revanche, la diffE<eacute>rence
+est que slurp_xml permet de spE<eacute>cifier les donnE<eacute>es qu'on veut avant de faire l'aspiration, ce qui
+rE<eacute>sulte dans une structure en mE<eacute>moire plus petite et moins compliquE<eacute>e.
+
 =head1 AUTEUR
 
 Klaus Eichner, Mars 2009
@@ -890,6 +950,7 @@ et DATA_INDENT=>2, ainsi votre rE<eacute>sultat sera proprement formatE<eacute> 
 =head1 REFERENCES
 
 L<XML::TokeParser>,
+L<XML::Simple>,
 L<XML::Parser>,
 L<XML::Parser::Expat>,
 L<XML::TiePYX>,

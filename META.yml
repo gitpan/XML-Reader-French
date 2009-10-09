@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               XML-Reader-French
-version:            0.01
+version:            0.02
 abstract:           Lire du XML avec des informations du chemin, conduit par un parseur d'extraction.
 author:
     - Klaus Eichner <klaus03@gmail.com>
