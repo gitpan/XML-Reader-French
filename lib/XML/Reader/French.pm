@@ -1,4 +1,4 @@
-our $VERSION     = '0.02';
+our $VERSION     = '0.03';
 
 print "This document is the French translation from English of the module XML::Reader. In order to\n";
 print "get the Perl source code of the module, please see file XML/Reader.pm\n";
@@ -872,12 +872,15 @@ et supprimer la deuxiE<egrave>me partie du texte 'end...' (ce que nous ne voulon
 
 La fonction slurp_xml lit un fichier XML et aspire son contenu dans une rE<eacute>fE<eacute>rence E<agrave> une
 liste. Voici un exemple oE<ugrave> nous souhaitons aspirer le nom, la rue et la ville de tous les clients dans
-le chemin '/data/order/database/customer':
+le chemin '/data/order/database/customer'. Nous souhaitons aussi d'aspirer le 'supplier' dans le chemin
+'/data/supplier'.
 
   use XML::Reader qw(slurp_xml);
 
   my $line2 = q{
   <data>
+    <supplier>ggg</supplier>
+    <supplier>hhh</supplier>
     <order>
       <database>
         <customer name="smith" id="652">
@@ -895,36 +898,50 @@ le chemin '/data/order/database/customer':
       </database>
     </order>
     <dummy value="ttt">test</dummy>
-    <supplier>hhh</supplier>
     <supplier>iii</supplier>
     <supplier>jjj</supplier>
   </data>
   };
 
-  my $aref = slurp_xml(\$line2, '/data/order/database/customer',
-    ['/@name', '/street', '/city']);
+  my $aref = slurp_xml(\$line2,
+    { root => '/data/order/database/customer', branch => ['/@name', '/street', '/city'] },
+    { root => '/data/supplier',                branch => ['/']                          },
+  );
 
-  for (@$aref) {
-      printf "Name = %-7s Street = %-12s City = %s\n", $_->[0], $_->[1], $_->[2];
+  for (@{$aref->[0]}) {
+      printf "Cust: Name = %-7s Street = %-12s City = %s\n", $_->[0], $_->[1], $_->[2];
+  }
+
+  print "\n";
+
+  for (@{$aref->[1]}) {
+      printf "Supp: Name = %s\n", $_->[0];
   }
 
 Le premier paramE<egrave>tre de slurp_xml est ou le nom du fichier (ou une une rE<eacute>fE<eacute>rence E<agrave>
 un scalaire, ou une rE<eacute>fE<eacute>rence E<agrave> un fichier ouvert) du XML qu'on veut aspirer.
-Dans notre cas nous avons une une rE<eacute>fE<eacute>rence E<agrave> un scalaire \$line2. Le deuxiE<egrave>me
-paramE<egrave>tre est la racine de l'arbre qu'on veut aspirer (dans notre cas c'est '/data/order/database/customer').
-Finalement nous donnons une liste des E<eacute>lE<eacute>ments que nous souhaitons sE<eacute>lectionner, relative
-E<agrave> la racine. Dans notre cas c'est ['/@name', '/street', '/city'].
+Dans notre cas nous avons une rE<eacute>fE<eacute>rence E<agrave> un scalaire \$line2. Le paramE<egrave>tre suivant
+est la racine de l'arbre qu'on veut aspirer (dans notre cas c'est '/data/order/database/customer') et
+nous donnons une liste des E<eacute>lE<eacute>ments que nous souhaitons sE<eacute>lectionner, relative
+E<agrave> la racine. Dans notre cas c'est ['/@name', '/street', '/city']. Le paramE<egrave>tre suivant est
+la deuxiE<egrave>me racine (dE<eacute>finition root/branch), dans ce cas c'est root => '/data/supplier' avec
+branch => ['/'].
 
 Voici le rE<eacute>sultat:
 
-  Name = smith   Street = high street  City = boston
-  Name = jones   Street = maple street City = new york
-  Name = stewart Street = ring road    City = dallas
+  Cust: Name = smith   Street = high street  City = boston
+  Cust: Name = jones   Street = maple street City = new york
+  Cust: Name = stewart Street = ring road    City = dallas
+
+  Supp: Name = ggg
+  Supp: Name = hhh
+  Supp: Name = iii
+  Supp: Name = jjj
 
 Le fonctionnement de slurp_xml est similaire E<agrave> L<XML::Simple>, c'est E<agrave> dire il lit toutes les
 donnE<eacute>es dans un seul coup dans une structure en mE<eacute>moire. En revanche, la diffE<eacute>rence
 est que slurp_xml permet de spE<eacute>cifier les donnE<eacute>es qu'on veut avant de faire l'aspiration, ce qui
-rE<eacute>sulte dans une structure en mE<eacute>moire plus petite et moins compliquE<eacute>e.
+rE<eacute>sulte dans une structure en mE<eacute>moire souvent plus petite et moins compliquE<eacute>e.
 
 =head1 AUTEUR
 
