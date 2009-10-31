@@ -1,4 +1,4 @@
-our $VERSION     = '0.03';
+our $VERSION     = '0.04';
 
 print "This document is the French translation from English of the module XML::Reader. In order to\n";
 print "get the Perl source code of the module, please see file XML/Reader.pm\n";
@@ -178,11 +178,18 @@ Option {filter => 3} supprime les attributs (c'est E<agrave> dire il supprime to
 sont $rdr->type eq '@'). En revanche, le contenu des attributs sont retournE<eacute> dans le hashage
 $rdr->att_hash.
 
-Option {filter => 4} crE<eacute>e une ligne individuel pour chaque balise de dE<eacute>but, de fin, pour chaque
-attribut, pour chaque commentaire et pour chaque processing-instruction. Ce fonctionnement
+Option {filter => 4} crE<eacute>e une ligne individuel pour chaque balise de dE<eacute>but, de fin,
+pour chaque attribut, pour chaque commentaire et pour chaque processing-instruction. Ce fonctionnement
 permet, en effet, de gE<eacute>nE<eacute>rer un format PYX.
 
-La syntaxe est {filter => 2|3|4}, le dE<eacute>faut est {filter => 2}
+Option {filter => 5} selectionne uniquement les donnE<eacute>es pour les racines ("root"). Les
+E<eacute>lE<eacute>ments pour chaque "root" sont accumulE<eacute> dans une rE<eacute>fE<eacute>rence E<agrave>
+un array (comme specifiE<eacute> dans la partie "branch") et quand le "branch" est complet, les donnE<eacute>es
+sont retournE<eacute>. Cette procE<eacute>dure se trouve au milieu entre l'option "using" (qui retourne les
+E<eacute>lE<eacute>ments un par un) et la fonction "slurp_xml" (qui accumule les donnE<eacute>es dans un "branch",
+et tous les "branches" sont accumulE<eacute>s dans une seule structure en mE<eacute>moire).
+
+La syntaxe est {filter => 2|3|4|5}, le dE<eacute>faut est {filter => 2}
 
 =item option {strip => }
 
@@ -767,6 +774,75 @@ Voici le rE<eacute>sultat:
   Path /parent         v=0 Found end tag   parent
 
 Notez que "v=1" (c'est E<agrave> dire $rdr->C<is_value> == 1) pour tous les textes et pour tous les attributs.
+
+=head2 Option {filter => 5}
+
+Avec option {filter => 5}, on spE<eacute>cifie une (ou plusieurs) racines ("roots"), chaque "root" a une collection
+de "branches". En rE<eacute>sultat on obtient un enregistrement pour chaque "root" dans l'aborescence XML. Chaque
+enregistrement contient les E<eacute>lE<eacute>ments qui ont E<eacute>tE<eacute> spE<eacute>cifiE<eacute>
+dans les "branches". Voici un exemple qui explique le principe:
+
+  use XML::Reader;
+
+  my $line2 = q{
+  <data>
+    <supplier>ggg</supplier>
+    <supplier>hhh</supplier>
+    <order>
+      <database>
+        <customer name="smith" id="652">
+          <street>high street</street>
+          <city>boston</city>
+        </customer>
+        <customer name="jones" id="184">
+          <street>maple street</street>
+          <city>new york</city>
+        </customer>
+        <customer name="stewart" id="520">
+          <street>ring road</street>
+          <city>dallas</city>
+        </customer>
+      </database>
+    </order>
+    <dummy value="ttt">test</dummy>
+    <supplier>iii</supplier>
+    <supplier>jjj</supplier>
+  </data>
+  };
+
+On veut lire les E<eacute>lE<eacute>ments "name", "street" et "city" de tous les clients dans
+le chemin '/data/order/database/customer' et on veut E<eacute>galement lire les fournisseurs
+dans le chemin '/data/supplier'. Les donnE<eacute>es pour la premiE<egrave>re racine
+('/data/order/database/customer') sont identifiable par $rdr->rx == 0, les donnE<eacute>es
+pour la deuxiE<egrave>me racine ('/data/supplier') sont identifiable par $rdr->rx == 1.
+
+  my $rdr = XML::Reader->newhd(\$line2, {filter => 5},
+    { root => '/data/order/database/customer', branch => ['/@name', '/street', '/city'] },
+    { root => '/data/supplier',                branch => ['/']                          },
+  );
+
+  while ($rdr->iterate) {
+      if ($rdr->rx == 0) {
+          for ($rdr->rvalue) {
+              printf "Cust: Name = %-7s Street = %-12s City = %s\n", $_->[0], $_->[1], $_->[2];
+          }
+      }
+      elsif ($rdr->rx == 1) {
+          for ($rdr->rvalue) {
+              printf "Supp: Name = %s\n", $_->[0];
+          }
+      }
+  }
+
+Voici le rE<eacute>sultat:
+
+  Supp: Name = ggg
+  Supp: Name = hhh
+  Cust: Name = smith   Street = high street  City = boston
+  Cust: Name = jones   Street = maple street City = new york
+  Cust: Name = stewart Street = ring road    City = dallas
+  Supp: Name = iii
+  Supp: Name = jjj
 
 =head1 EXEMPLES
 
